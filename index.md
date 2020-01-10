@@ -1,6 +1,6 @@
 # Junseok Ahn
 
-* GonghangDaero, Gangseo-ku, Seoul
+* GonghangDaero, Gangseo-gu, Seoul
 * Phone: 010-2106-6534
 * e015751@gmail.com, github.com/JunseokAhn
 
