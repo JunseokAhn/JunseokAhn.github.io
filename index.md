@@ -7,8 +7,9 @@
 # Skills
 ### Backend
 * Java
-* MyBatis
 * Eclipse
+* MyBatis
+* Spring
 
 ### DevOps
 * OracleDB
