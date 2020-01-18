@@ -6,8 +6,6 @@
 
 # Skills
 ### Backend
-* Java
-* Eclipse
 * MyBatis
 * Spring
 
@@ -21,7 +19,7 @@
 ---
 
 # Projects
-### Jewelry Trading Application | 10 . 2019 - PRESENT
+### CRUD project  | 12 . 2019
 * MyBatis, GIT
 
 ---
