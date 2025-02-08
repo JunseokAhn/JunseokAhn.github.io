@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Legendary Food</title>
+
+    <!-- 구글 폰트 (예: Noto Sans KR) 로드 -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* CSS 리셋 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f7f9fb;
+            color: #333;
+            line-height: 1.4;
+        }
+
+        /*****************
+         * 헤더
+         *****************/
+        header {
+            background: linear-gradient(135deg, #00a0e9 0%, #008fd6 100%);
+            padding: 16px;
+            text-align: center;
+            color: #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        /*****************
+         * 레이아웃
+         *****************/
+        #layout {
+            display: flex;
+            flex-wrap: wrap; /* 반응형에서 줄바꿈 지원 */
+        }
+        #map {
+            flex: 1 1 66%;
+            min-width: 280px;
+            height: 750px;
+            margin: 16px;
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        }
+        #sideMenu {
+            flex: 0 0 450px; /* 기본 폭 300px */
+            margin: 16px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+            padding: 16px;
+        }
+
+        /* 사이드메뉴 내부 */
+        .title {
+            font-weight: 700;
+            margin-bottom: 8px;
+            font-size: 1.05rem;
+            color: #222;
+            border-left: 4px solid #00a0e9;
+            padding-left: 8px;
+            margin-top: 16px;
+        }
+        #sideMenu form {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        #sideMenu input[type="text"] {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        #sideMenu button {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 4px;
+            background: #00a0e9;
+            color: #fff;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #sideMenu button:hover {
+            background-color: #008fd6;
+        }
+
+        #sideMenu p {
+            font-size: 0.9rem;
+            color: #555;
+            margin-bottom: 12px;
+        }
+
+        /*****************
+         * 검색결과, 카테고리 리스트
+         *****************/
+        .marker-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: #fff;
+            padding: 10px;
+            margin-top: 8px;
+        }
+        .marker-list-max {
+            max-height: 1000px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: #fff;
+            padding: 10px;
+            margin-top: 8px;
+        }
+        .marker-item {
+            margin-bottom: 6px;
+            padding: 6px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .marker-item:hover {
+            background-color: #eff6ff;
+        }
+        .marker-item:active {
+            background-color: #e2e8f0;
+        }
+
+        /* 2번째 사이드메뉴 영역 */
+        #sideMenu2 {
+            margin-top: 16px;
+        }
+
+        /*****************
+         * infoBox, 반경정보
+         *****************/
+        .infoBox {
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 8px;
+            border-radius: 4px;
+            max-width: 200px;
+            font-size: 0.9rem;
+        }
+        .info {
+            position: relative;
+            border: 1px solid #e2e8f0;
+            border-bottom: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            padding: 6px;
+            background: #fff;
+            list-style: none;
+            margin-top: 8px;
+        }
+        .info .label {
+            display: inline-block;
+            width: 50px;
+            color: #666;
+        }
+        .info .number {
+            font-weight: bold;
+            color: #00a0e9;
+        }
+
+        /*****************
+         * 반응형
+         *****************/
+        @media (max-width: 480px) {
+            #map {
+                order: 2; /* 모바일에서 지도 먼저 */
+                height: 480px;
+            }
+            #sideMenu {
+                order: 1; /* 사이드메뉴 위로 */
+                width: auto;
+                margin: 8px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<header>
+    <h1>Legendary Food - 맛집 지도</h1>
+</header>
+
+<div id="layout">
+    <!-- 지도 영역 -->
+    <div id="map"></div>
+
+    <!-- 사이드 메뉴 -->
+    <div id="sideMenu">
+        <div>
+            <div class="title">위치 검색</div>
+            <form onsubmit="searchKeyword(); return false;">
+                <input type="text" id="keyword" placeholder="예) 이태원역">
+                <button type="submit">검색</button>
+            </form>
+        </div>
+
+        <div>
+            <div class="title">검색범위 지정</div>
+            <p>
+                ● 지도 <strong>좌클릭</strong> : 범위검색 위치 지정<br>
+                ● 지도 <strong>우클릭</strong> : 범위 확정 + 주변 가게 검색
+            </p>
+        </div>
+
+        <div>
+            <div id="storeTitle" class="title">추천 맛집</div>
+            <div id="storeList" class="marker-list"></div>
+            <div id="categoryTitle" class="title">카테고리 검색 (주변 가게)</div>
+            <div id="categoryList" class="marker-list-max"></div>
+        </div>
+
+        <div id="sideMenu2">
+        </div>
+    </div>
+</div>
+
+<!-- 카카오맵 JS SDK (appkey= 본인 키로 교체 + services 라이브러리) -->
+<script type="text/javascript"
+        src="//dapi.kakao.com/v2/maps/sdk.js?appkey=ff5afe7357051d0516958b1d8f23b099&libraries=services">
+</script>
+
+<script>
+    /****************************************************
+     * 전역 변수 정의
+     ****************************************************/
+    var map;                // 지도 객체
+    var markers = [];       // 가게(검색) 마커 배열
+    var centerMarker = null; // 좌클릭 시 찍는 마커 (원 중심)
+    var polyline;
+    var radiusOverlay;
+    var circle = null;    // 그려진 원 객체
+    var infowindow = new kakao.maps.InfoWindow({ zIndex: 2 });
+    var ps = null;         // 카카오맵 장소검색 객체
+    var bound4lat = 37.5111118953125; //y
+    var bound4lon = 127.03570768493; //x
+    var bound4latlon= new kakao.maps.LatLng(bound4lat, bound4lon);
+
+    var starImageSrc = "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png";
+    var markerImageSize = new kakao.maps.Size(24, 35);
+    var starMarkerImage = new kakao.maps.MarkerImage(starImageSrc, markerImageSize);
+    /****************************************************
+     * 초기 지도 세팅
+     ****************************************************/
+    function initMap() {
+        var container = document.getElementById('map');
+        var options = {
+            center: bound4latlon, // 기본 위치
+            level: 4
+        };
+        map = new kakao.maps.Map(container, options);
+
+        centerMarker = new kakao.maps.Marker({
+            title: "바운드포",
+            position: bound4latlon,
+            image: starMarkerImage
+        });
+        centerMarker.setMap(map);
+        // 장소검색 객체 생성
+        ps = new kakao.maps.services.Places();
+        edgeLatLng = calculateLatOffset(bound4lat, bound4lon, 500);
+        drawCircleAndSearch(bound4latlon, edgeLatLng)
+        // HTML5 Geolocation (사용자 현재 위치 받아 지도 이동) - 선택적
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(pos) {
+                var lat = pos.coords.latitude;
+                var lng = pos.coords.longitude;
+                var locPosition = new kakao.maps.LatLng(lat, lng);
+                map.setCenter(locPosition);
+            });
+        }
+
+        // 지도 이벤트 등록
+        // 1) 좌클릭 -> 중심 마커 찍기
+        kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
+            setCenterMarker(mouseEvent.latLng);
+        });
+
+        // 2) 우클릭 -> 원 그리기 + 주변 검색
+        kakao.maps.event.addListener(map, 'rightclick', function(mouseEvent) {
+            if (!centerMarker) return;  // 좌클릭으로 중심이 지정되지 않았다면 무시
+            drawCircleAndSearch(centerMarker.getPosition(), mouseEvent.latLng);
+        });
+    }
+
+    /****************************************************
+     * 1. 좌클릭 시 중심 마커 찍기
+     ****************************************************/
+    function setCenterMarker(latLng) {
+        // 기존에 있던 마커 제거
+        if (centerMarker) {
+            centerMarker.setMap(null);
+        }
+        // 기존 원도 제거
+        removeCircle();
+        removeInfo();
+
+        centerMarker = new kakao.maps.Marker({
+            position: latLng
+        });
+        centerMarker.setMap(map);
+    }
+
+    /****************************************************
+     * 2. 우클릭 시 원 그리기 + DB 검색 (가게 마커 표시)
+     ****************************************************/
+    function drawCircleAndSearch(centerLatLng, edgeLatLng) {
+        // 이전 원, 선 삭제
+        removeCircle();
+
+        // 중심 ~ 우클릭 거리 계산
+        polyline = new kakao.maps.Polyline({
+            path: [centerLatLng, edgeLatLng],
+            strokeWeight: 3,
+            strokeColor: '#00a0e9',
+            strokeOpacity: 1,
+            strokeStyle: 'solid'
+        });
+        var distance = polyline.getLength(); // 미터(m)
+
+        // 원 생성
+        circle = new kakao.maps.Circle({
+            center: centerLatLng,
+            radius: distance,
+            strokeWeight: 2,
+            strokeColor: '#00a0e9',
+            strokeOpacity: 0.3,
+            strokeStyle: 'solid',
+            fillColor: '#00a0e9',
+            fillOpacity: 0.1
+        });
+        circle.setMap(map);
+
+        var radius = Math.round(circle.getRadius());
+        var content = getTimeHTML(radius);
+
+        // 원 반경정보를 표시할 커스텀오버레이
+        radiusOverlay = new kakao.maps.CustomOverlay({
+            content: content,
+            position: edgeLatLng,
+            xAnchor: 0.5,
+            yAnchor: 1,
+            zIndex: 3
+        });
+
+        radiusOverlay.setMap(map);
+        polyline.setMap(map);
+
+        fetchStoreData(centerLatLng.getLat(), centerLatLng.getLng(), radius, null, 30, centerLatLng);
+    }
+
+    // 원, 선 제거
+    function removeCircle() {
+        if (circle) {
+            circle.setMap(null);
+            circle = null;
+        }
+    }
+
+    // 커스텀 오버레이 등 제거
+    function removeInfo() {
+        if (polyline) {
+            polyline.setMap(null);
+            polyline = null;
+        }
+        if (radiusOverlay) {
+            radiusOverlay.setMap(null);
+            radiusOverlay = null;
+        }
+        infowindow.close();
+
+    }
+
+    /****************************************************
+     * 4. 가게 목록(서버 응답 가정) 받아서 마커 표시
+     ****************************************************/
+    function fetchStoreData(lat, lng, radius, category, limit, centerLatLng) {
+        let url = "https://lvsiqlpwv6.execute-api.ap-northeast-2.amazonaws.com/stores";
+        url += `?lat=${lat}&lng=${lng}&radius=${radius}&limit=${limit}`;
+
+        // category가 존재할 경우에만 추가
+        if (category) {
+            url += `&category=${encodeURIComponent(category)}`;
+        }
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                parseMarkers(data, centerLatLng);
+                parseCategories(data, centerLatLng);
+            });
+    }
+
+
+    function parseCategories(data, lat, lng, radius, centerLatLng) {
+
+        document.getElementById('categoryTitle').innerHTML = "점포 종류 - " + data.summaryCnt + '개';
+        var listContainer = document.getElementById('categoryList');
+        listContainer.innerHTML = '';
+
+        summaries = data.categorySummaries;
+        summaries.forEach(function(summary, idx) {
+            var div = document.createElement('div');
+            div.className = 'marker-item';
+            var strCategory;
+            if(summary.category=='카페' || summary.category.endsWith('집')){
+                strCategory = summary.category;
+            }
+            else {
+                strCategory = summary.category + '집';
+            }
+            div.innerText = strCategory + ': ' + summary.cnt + '개';
+            div.onclick = function() {
+                removeInfo();
+                fetchStoreData(lat, lng, radius, summary.category, 30, centerLatLng);
+            }
+            listContainer.appendChild(div);
+        });
+
+
+    }
+
+    function parseMarkers(data, centerLatLng) {
+        // 기존 마커 제거
+        removeAllMarkers();
+        var titleComponent = document.getElementById('storeTitle');
+        var listContainer = document.getElementById('storeList');
+
+        storeCnt= data.storeCnt;
+        stores = data.stores;
+        titleComponent.innerHTML = '추천 맛집 - ' + storeCnt + '개';
+        listContainer.innerHTML = '';
+        stores.forEach(function(store, idx) {
+            var latlng = new kakao.maps.LatLng(store.lat, store.lng);
+
+            // 마커 생성
+            var marker = new kakao.maps.Marker({
+                position: latlng
+            });
+            marker.setMap(map);
+            markers.push(marker);
+            var storeName = store.storeName;
+            var category = store.category;
+            var score = store.score.toFixed(1)
+            // 인포윈도우 or 클릭 이벤트
+            kakao.maps.event.addListener(marker, 'click', function() {
+                var content = '<div class="infoBox">'
+                    +   '<b>' + storeName + '</b><br>'
+                    +  category  + ' | ' + score
+                    + '</div>';
+                infowindow.setContent(content);
+                infowindow.open(map, marker);
+
+                //TODO 폴리라인, 시간
+            });
+
+            // 사이드 목록에 표시
+            var div = document.createElement('div');
+            div.className = 'marker-item';
+            div.innerText = (idx + 1) + '. ' + storeName + ' - ' + score + ' (' + category + ')';
+            div.onclick = function() {
+                removeInfo();
+                polyline = new kakao.maps.Polyline({
+                    path: [centerLatLng, latlng],
+                    strokeWeight: 3,
+                    strokeColor: '#00a0e9',
+                    strokeOpacity: 1,
+                    strokeStyle: 'solid'
+                });
+
+                map.panTo(latlng);
+                content = '<div class="infoBox">'
+                    +   '<b>' + store.store_name + '</b><br>'
+                    +   category + ' | ' + score
+                    + '</div>';
+                infowindow.setContent(content);
+                infowindow.open(map, marker);
+
+                polyline.setMap(map);
+            };
+            listContainer.appendChild(div);
+        });
+    }
+
+    function removeAllMarkers() {
+        markers.forEach(function(m) {
+            m.setMap(null);
+        });
+        markers = [];
+    }
+
+    /****************************************************
+     * 5. 키워드 검색 (카카오 장소검색)
+     ****************************************************/
+    function searchKeyword() {
+        var keyword = document.getElementById('keyword').value.trim();
+        if (!keyword) {
+            alert('검색어를 입력하세요!');
+            return;
+        }
+        ps.keywordSearch(keyword, function(data, status) {
+            if (status === kakao.maps.services.Status.OK) {
+                // 첫 번째 결과 좌표로 지도 이동
+                var firstPlace = data[0];
+
+                var newCenter = new kakao.maps.LatLng(firstPlace.y, firstPlace.x);
+                map.setCenter(newCenter);
+
+                // 대표 마커 하나 표시 (원한다면 여러 개도 가능)
+                if (centerMarker) centerMarker.setMap(null); // 기존 마커 제거
+                centerMarker = new kakao.maps.Marker({
+                    position: newCenter,
+                    image: starMarkerImage
+                });
+                centerMarker.setMap(map);
+
+                edgeLatLng = calculateLatOffset(firstPlace.y, firstPlace.x, 500)
+                drawCircleAndSearch(newCenter, edgeLatLng);
+            } else if (status === kakao.maps.services.Status.ZERO_RESULT) {
+                alert('검색 결과가 없습니다.');
+            } else {
+                alert('검색 중 오류가 발생했습니다.');
+            }
+        });
+    }
+
+    /****************************************************
+     * 6. 거리/시간 정보 표시용 HTML (도보, 자전거, 자동차)
+     ****************************************************/
+    function getTimeHTML(distance) {
+        // 도보 시속 4km/h => 분속 67m
+        var walkTime = distance / 67 | 0;
+        var walkHour = '', walkMin = '';
+        if (walkTime > 60) {
+            walkHour = '<span class="number">' + Math.floor(walkTime / 60) + '</span>시간 ';
+        }
+        walkMin = '<span class="number">' + (walkTime % 60) + '</span>분';
+
+        // 자전거 시속 16km/h => 분속 267m
+        var cycleTime = distance / 227 | 0;
+        var cycleHour = '', cycleMin = '';
+        if (cycleTime > 60) {
+            cycleHour = '<span class="number">' + Math.floor(cycleTime / 60) + '</span>시간 ';
+        }
+        cycleMin = '<span class="number">' + (cycleTime % 60) + '</span>분';
+
+        // 자동차 시속 50km/h => 분속 833m
+        var vehicleTime = distance / 833 | 0;
+        var vehicleHour = '', vehicleMin = '';
+        if (vehicleTime > 60) {
+            vehicleHour = '<span class="number">' + Math.floor(vehicleTime / 60) + '</span>시간 ';
+        }
+        vehicleMin = '<span class="number">' + (vehicleTime % 60) + '</span>분';
+
+        var content = '<ul class="info">'
+            + '  <li><span class="label">총거리</span><span class="number">'
+            + distance
+            + '</span>m</li>'
+            + '  <li><span class="label">도보</span>'
+            + walkHour + walkMin + '</li>'
+            + '  <li><span class="label">자전거</span>'
+            + cycleHour + cycleMin + '</li>'
+            + '  <li><span class="label">자동차</span>'
+            + vehicleHour + vehicleMin + '</li>'
+            + '</ul>';
+        return content;
+    }
+
+    /****************************************************
+     * 7. 지정거리만큼 이동된 좌표계산
+     ****************************************************/
+    function calculateLatOffset(inputLat, inputLon, inputDistance) {
+        const lat = parseFloat(inputLat);
+        const lng = parseFloat(inputLon);
+        const distance = parseFloat(inputDistance);
+        const METERS_PER_DEGREE_LAT = 111000; // 위도 1도는 약 111,000미터
+        // 거리(m)를 위도 차이로 변환
+        const latOffset = distance / METERS_PER_DEGREE_LAT;
+        // 새로운 위도 계산
+        const newLat = lat + latOffset;
+        const newLatLng = new kakao.maps.LatLng(newLat, lng);
+
+        return newLatLng;
+    }
+    /****************************************************
+     * 페이지 로드시 지도 초기화
+     ****************************************************/
+    window.onload = function() {
+        initMap();
+    };
+</script>
+</body>
+</html>
