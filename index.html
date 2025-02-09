@@ -458,9 +458,9 @@
             });
             marker.setMap(map);
             markers.push(marker);
-            var storeName = store.storeName;
+            var storeName = store.store_name;
             var category = store.category;
-            var score = store.score
+            var score = store.score;
             // 인포윈도우 or 클릭 이벤트
             kakao.maps.event.addListener(marker, 'click', function() {
                 var content = '<div class="infoBox">'
@@ -489,7 +489,7 @@
 
                 map.panTo(latlng);
                 content = '<div class="infoBox">'
-                    +   '<b>' + store.store_name + '</b><br>'
+                    +   '<b>' + storeName + '</b><br>'
                     +   category + ' | ' + score
                     + '</div>';
                 infowindow.setContent(content);
