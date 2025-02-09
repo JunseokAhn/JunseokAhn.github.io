@@ -406,7 +406,7 @@
             .then(res => res.json())
             .then(data => {
                 parseMarkers(data, centerLatLng);
-                parseCategories(data, centerLatLng);
+                parseCategories(data, lat, lng, radius, centerLatLng);
             });
     }
 
